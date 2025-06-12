@@ -1,0 +1,94 @@
+body{
+    background-color: #0099ff;
+    margin: 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gameBoard{
+    padding: 10px;
+    gap: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.gameButtons{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 35px;
+    padding: 25px;
+}
+
+
+#gameCells{
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    width: auto;
+    margin: auto;
+    padding: 50px 50px;
+}
+
+.cell{
+    width: 100px;
+    height: 100px;
+    border: 3px solid black;
+    line-height: 75px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+}
+
+.cell:hover{
+    background-color: #ff8000;
+}
+
+button{
+    padding: 10px 10px;
+    font-weight: normal;
+    font-size: 1rem;
+
+    background-color: green;
+    color: white;
+    border-radius: 20px;
+    
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+button:hover{
+    background-color: white;
+    color: black;
+}
+
+.tooltip{
+  position: relative;
+  display: flex;
+  flex-direction: row;
+}
+
+
+.tooltip .tooltiptext{
+    visibility: hidden;
+    width: 300px;
+
+    background-color: yellow;
+    color: black;
+    text-align: center;
+    padding: 5px;
+    border-radius: 5px;
+
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 50%;
+    margin-left: -150px;
+}
+
+.tooltip:hover .tooltiptext{
+    visibility: visible;
+}

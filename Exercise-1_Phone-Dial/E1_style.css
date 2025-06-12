@@ -1,0 +1,85 @@
+body{
+  background-color: #202020;
+}
+
+.row{
+  color: #FFFFFF;
+  margin: 0 auto;
+  width: 280px;
+  clear: both;
+  text-align: center;
+}
+
+.digit{
+  float: left;
+  padding: 10px 30px;
+  width: 30px;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.sub{
+    font-size: 0.8rem;
+}
+
+.container{
+  background-color: grey;
+  width: 320px;
+  padding: 20px;
+  margin: 30px auto;
+  height: 420px;
+  text-align: center;
+}
+
+#output{
+  background-color: white;
+  font-size: 2rem;
+  height: 40px;
+  font-weight: bold;
+  color: blue;
+}
+
+.bottom-row{
+  background-color: grey;
+  padding: 20px;
+  margin: 30px auto;
+  text-align: center;
+}
+
+.button{
+  height: 66px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: white;
+  padding: 20px;
+  background-color: green;
+}
+
+.alphabet{
+  background-color: blue;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.alphabet:hover{
+  background-color: aqua;
+  color: black;
+}
+
+.call-button{
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.call-button:hover{
+  background-color: lightgreen;
+  color: black;
+}
+
+.clear-digit{
+  background-color: red;
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.clear-digit:hover{
+  background-color: lightsalmon;
+  color: black;
+}
