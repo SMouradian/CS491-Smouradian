@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang = "en">
-<link rel = "stylesheet" href = "style.css">
-
-<title>
-    TIC TAC TOE
-</title>
+<head>
+    <meta charset = "UTF-8">
+    <link rel = "stylesheet" href = "style.css">
+    <title>TIC TAC TOE</title>
+</head>
 
 <body>
     <h1>Tic-Tac-Toe</h1>
-    <h4>Attempt to stop the bot from winning!</h4>
     <div class = "gameBoard">
         <div class = "tooltip">
-            <button type = "button" id = "start"> START</button>
-            <button type = "button" id = "clear"> CLEAR</button>
+            <button type = "button" id = "startButton"> START</button>
+            <button type = "button" id = "clearButton"> CLEAR</button>
             <span class = "tooltiptext">Press START to begin a game. Press CLEAR to clean the game board.</span>
         </div>
 
@@ -27,6 +26,9 @@
             <div cellNumber = "7" class = "cell"></div>
             <div cellNumber = "8" class = "cell"></div>
         </div>
+
+        <h3 id = "playerTurn"></h3>
+
     </div>
     <script src = "TicTacToe.js"></script>
 </body>
