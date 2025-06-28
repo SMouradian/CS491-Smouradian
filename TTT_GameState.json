@@ -1,0 +1,8 @@
+{
+  "board": ["", "", "", "", "", "", "", "", ""],
+  "playerOne": true,
+  "playerTwo": false,  
+  "winner": null,
+  "gameInProgress": false,
+  "lastMoveTime": null
+}

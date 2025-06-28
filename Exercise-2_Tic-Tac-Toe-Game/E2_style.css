@@ -1,33 +1,14 @@
 body{
-    background-color: black;
-    color: white;
-    margin: 5px;
+    background-color: #0099ff;
+    margin: 7px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-#gameDice{
-    margin-bottom: 1rem;
-    padding: 20px;
-    text-align: center;
-    background-color: black;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-#userInputField input[type = "number"]{
-    padding: 5px;
-    width: 200px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-.gameArea{
+.gameBoard{
     padding: 10px;
+    gap: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,32 +18,31 @@ body{
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 15px;
-    padding-top: 20px;
+    gap: 35px;
+    padding: 25px;
 }
 
-#gameBoard{
+
+#gameCells{
     display: grid;
     grid-template-columns: repeat(3, auto);
     width: auto;
     margin: auto;
-    padding: 60px;
+    padding: 50px 50px;
 }
 
 #playerTurn{
     font-size: 2rem;
-    display: flex;
+    display:flex;
     align-items: center;
     color: white;
-    border-radius: 20px;
-    outline: 5px white;
-    padding: 20px;
+    padding: 2px;
 }
 
 .cell{
-    width: 90px;
-    height: 90px;
-    border: 3px solid white;
+    width: 100px;
+    height: 100px;
+    border: 3px solid black;
     line-height: 75px;
     color: white;
     text-align: center;
@@ -70,16 +50,18 @@ body{
 }
 
 .cell:hover{
-    background-color: orangered;
+    background-color: #ff8000;
 }
 
 button[type = "button"]{
-    font-size: 1.5rem;
-    font-weight: bold;
-    padding: 5px;
-    border-radius: 10px;
-    background-color: lightblue;
-    color: black;
+    padding: 10px 10px;
+    font-weight: normal;
+    font-size: 1rem;
+
+    background-color: green;
+    color: white;
+    border-radius: 20px;
+    
     cursor: pointer;
     display: flex;
     flex-direction: row;
@@ -88,19 +70,21 @@ button[type = "button"]{
 
 button[type = "button"]:hover{
     background-color: white;
+    color: black;
 }
 
 .tooltip{
-    position: relative;
-    display: flex;
-    flex-direction: row;
+  position: relative;
+  display: flex;
+  flex-direction: row;
 }
 
-.tooltiptext{
+
+.tooltip .tooltiptext{
     visibility: hidden;
     width: 300px;
 
-    background-color: white;
+    background-color: yellow;
     color: black;
     text-align: center;
     padding: 5px;

@@ -12,5 +12,6 @@ Each assignment and its respective files will be placed in a folder within the r
 The current file(s) that can be accessed:
 <ul>
     <li>Exercise 1 -> Phone Dial</li>
-    <li>Exercise 2 -> Tic Tac Toe Game [current exercise (try it here: https://smouradian.github.io/CS491-Smouradian/); pending approval]</li>
+    <li>Exercise 2 -> Tic Tac Toe Game</li>
+    <li>Exercise 3 -> Two Player Tic Tac Toe Game [current exercise (try it here: https://smouradian.github.io/CS491-Smouradian/); pending approval]</li>
 </ul>
