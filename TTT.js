@@ -2,8 +2,6 @@
 // Assignment Due Date (NEW)    - 07.10.2025
 // NOTE                         - Updated on 07.08.2025 for grading purposes
 
-const { startTransition, useCallback } = require("react");
-
 
 /*
 ==============================================================================
@@ -392,7 +390,7 @@ async function selectStartingPlayer(){
     removeInputField();
     if(playerSubmissions){
         prepGameLogic();
-        toggleBtn.addEventListener("click", toggleBtn);
+        toggleBtn.addEventListener("click", buttonToggle);
     }
 }
 
@@ -497,6 +495,8 @@ async function restartGame(){
     clearInterval(refreshInterval);
     clearInterval(fileLoadInterval);
     clearInterval(importDataInterval);
+    presentGameState.isP1 = [false, ""];
+    presentGameState.isP2 = [false, ""];
     displayCurrentPlayer();
     resetGameStateAndBoard();
     createGameStateAfterStart();
@@ -565,7 +565,7 @@ async function assignPlayersIdentification(){
             await updateBackUpGameFile();
         }
         else{
-            alert("Both players assigned...");
+            alert("Both players already assigned...");
             window.location.reload();
             return;
         }
