@@ -33,7 +33,7 @@ body{
     align-items: center;
 }
 
-.gameButtons{
+.gameButton{
     display: flex;
     flex-direction: row;
     align-items: center;

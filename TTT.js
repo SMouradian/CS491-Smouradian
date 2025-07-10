@@ -1,18 +1,9 @@
-// Samuel Mouradian - CS 491.691.2001
-// NOTE - YOU NEED A "gameState.json" FILE FOR THIS TO WORK
+// Samuel Mouradian             - CS 491.691.2001
+// Assignment Due Date (NEW)    - 07.10.2025
+// NOTE                         - Updated on 07.08.2025 for grading purposes
 
+const { startTransition, useCallback } = require("react");
 
-/**
- * @type {number}
- * @type {number}
- * @type {number}
- * @type {FileSystemgameFileFlag}
- * @type {string}
- */
-let syncToJSON;
-let loadToFile;
-let importFromFile;
-let gameFileFlag, gameFileInfo;
 
 /*
 ==============================================================================
@@ -20,215 +11,255 @@ let gameFileFlag, gameFileInfo;
 ==============================================================================
 */
 /**
- * @param {HTMLElement} cells
- * @param {HTMLElement} gameButton
- * @param {HTMLElement} playerTurn
- * @param {number[][]} victoryCombination
+ * @param {HTMLElement} toggleBtn
+ * @param {HTMLElement} playerDiceGuess
+ * @param {html} cells
+ * @param {html} toggleBtn
+ * @param {html} playerTurn
  * @param {string} currPlayer
  * @param {boolean} currGame
-*/
+ * @param {number[][]} victoryCombination
+ */
 
 const cells = document.querySelectorAll(".cell");
-const playerTurnText = document.querySelector("#playerTurn");
-const gameButton = document.querySelector("#gameButton");
-const DiceRollGuess = document.querySelector("#numberGuess");
-
-/*
-    Winning conditions
-*/
-const victoryCombinations = [
-    [0,1,2], [3,4,5], [6,7,8], [0,3,6],
-    [1,4,7], [2,5,8], [0,4,8], [2,4,6]
-];
+const playerTurn = document.querySelector("#playerTurn");
+const toggleBtn = document.querySelector("#toggleBtn");
+const playerDiceGuess = document.querySelector("#userInputField");
 
 /**
- * @type {object}
- * @type {object}
-*/
-let newGame = {
-    TTTBoard: ["", "", "", "", "", "", "", "", "" ],
-    currPlayer: "",
-    p1DiceGuess: null,
-    p2DiceGuess: null,
-    diceRoll: null,
-    assignP1: [false, ""],
-    assignP2: [false, ""],
-    victoryCombination: null,
-    winner: null
-}
-
-let presentGame = {
-    TTTBoard: ["", "", "", "", "", "", "", "", "" ],
-    currPlayer: "", 
-    p1DiceGuess: null,
-    p2DiceGuess: null,
-    diceRoll: null,
-    assignP1: [false, ""],
-    assignP2: [false, ""],
-    victoryCombination: null,
-    winner: null
-}
-
-
-/**
- * @type {boolean}
- * @type {boolean}
- * @type {boolean}
- * @type {boolean}
- * @type {boolean}
- * @type {boolean}
+ * @type {Object} defaultGameState
  */
-let gameFlag = false;
-let startOfNewGame = true;
-let P1 = false;
-let P2 = false;
-let twoNumberGuesses = false;
-let moveFromPlayers = false;
+let defaultGameState = {
+    board: ["", "", "", "", "", "", "", "", ""],
+    currPlayer: "",
+    p1Guess: null,
+    p2Guess: null,
+    diceRoll: null,
+    isP1: [false, ""],
+    isP2: [false, ""],
+    victorious: null,
+    winner: null
+}
+
+/**
+ * @type {Object} presentGameState
+ */
+let presentGameState = {
+    board: ["", "", "", "", "", "", "", "", ""],
+    currPlayer: "",
+    p1Guess: null,
+    p2Guess: null,
+    diceRoll: null,
+    isP1: [false, ""],
+    isP2: [false, ""],
+    victorious: null,
+    winner: null
+}
+
+const victoryCombination = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+]
+
+/**
+ * @type {boolean} gameOne
+ * @type {boolean} gameStarted
+ * @type {boolean} player1
+ * @type {boolean} player2
+ * @type {boolean} playerSubmissions
+ * @type {boolean} successfulPlayerAction
+ * 
+ * @type {number} refreshInterval
+ * @type {number} fileLoadInterval
+ * @type {number} importDataInterval
+ * 
+ * @type {FileSystemFileHandle} fileFlag
+ * 
+ * @type {string} gameInformation
+ */
+let gameOne = true;
+let gameStarted = false;
+let player1 = false;
+let player2 = false;
+let playerSubmissions = false;
+let successfulPlayerAction = false;
+
+let refreshInterval;
+let fileLoadInterval;
+let importDataInterval;
+
+let fileFlag;
+let gameInformation;
 
 
-diceValueFromAutoRoll.addEventListener("keydown", async (event) => {
+displayOpeningMessage();
+toggleBtn.addEventListener("click", buttonToggle);
+numberGuess.addEventListener("keydown", async(event) => {
     if(event.key === "Enter"){
-        await rollStartingDice();
+        await selectStartingPlayer();
     }
 });
 
-function displayPlayers(){
-    if((presentGame.p1DiceGuess !== null && presentGame.p2DiceGuess !== null) && !gameFlag){
-        gameFlag = true;
-        boardCreation();
+function showPlayerData(){
+    if((presentGameState.p1Guess !== null && presentGameState.p2Guess !== null) && !gameStarted){
+        gameStarted = true;
+        revealBoard();
     }
-    if((presentGame.assignP1[1] === presentGame.currPlayer) && P1){
-        playerTurnText.textContent = `Player One you are ${presentGame.assignP1[1]} your move!`;
+
+    if((presentGameState.isP1[1] === presentGameState.currPlayer) && player1){
+        playerTurn.textContent = 'Player One, begin your move...';
     }
-    else if((presentGame.assignP2[1] === presentGame.currPlayer) && P2){
-        playerTurnText.textContent = `Player Two you are ${presentGame.assignP2[1]} your move!`;
+    else if((presentGameState.isP2[1] === presentGameState.currPlayer) && player2){
+        playerTurn.textContent = 'Player Two, begin your move...';
     }
     else{
-        playerTurnText.textContent = `waiting for other player's turn.`;
+        playerTurn.textContent = 'Awaiting oponent...';
     }
 }
 
+
 /**
- * @returns {number}
+ * @returns {number} playerFlag
  */
-async function playerInputFromDice(){
+async function getPlayerDiceInput(){
     const numberGuess = document.getElementById("numberGuess").value;
     return parseInt(numberGuess);
 }
 
-function updatePlayerTurnText(){
-    syncToJSON = setInterval(() => {
-        displayPlayers();
+function awaitingOtherPlayerNumberSubmission(){
+    playerTurn.textContent = 'Waiting for number guesses from each player...';
+}
+
+function updatePlayerTurn(){
+    refreshInterval = setInterval(() => {
+        showPlayerData();
     }, 250);
 }
 
-function removeDiceGuessInput(){
-    if(twoSubmittedGuesses){
+function removeInputField(){
+    if(playerSubmissions){
         document.getElementById("gameDice").style.display = "none";
     }
 }
 
-async function initiateGame(){
-    await gameStateUpdate();
-    if(!gameFlag){
-        gameFlag = true;
-        boardCreation();
-    }
-    playerTurnText.textContent = `Please enter your guess!`;
-    if(P1){
-        playerTurnText.textContent = `You are player 1 - Please enter your guess!`;
-    }
-    else if(P2){
-        playerTurnText.textContent = `You are player 2 - Please enter your guess!`;
+async function initiateGUI(){
+    await updateGameFile();
+    if(!gameStarted){
+        gameStarted = true;
+        revealBoard();
     }
 
-    if(presentGame.assignP1[1] !== "" && presentGame.assignP2[1] !== ""){
+    playerTurn.textContent = 'Please enter a number.';
+    if(player1){
+        playerTurn.textContent = 'You are Player One - enter a number.';
+    }
+    else if(player2){
+        playerTurn.textContent = 'You are Player Two - enter a number.';
+    }
+
+    if(presentGameState.isP1[1] !== "" && presentGameState.isP2[1] !== ""){
         createGameStateAfterStart();
-        presentGame.winner = null;
-        await updateGameFileState();
+        presentGameState.winner = null;
+        await updateBackUpGameFile();
     }
     else{
         document.getElementById("gameDice").style.display = "block";
     }
 }
 
-function formulateCells(){
-    cells.forEach(cell => cell.removeEventListener("click", selectedCells));
-    cells.forEach(cell => cell.addEventListener("click", selectedCells)); 
-    cells.forEach(color => color.style.color = "white");
+function initializeCells(){
+    cells.forEach(cell => cell.removeEventListener("click", cellClicked));
+    cells.forEach(cell => cell.addEventListener("click", cellClicked));
+    cells.forEach(color => color.style.color = "black");
 }
 
 
 /**
  * @param {MouseEvent} event
  */
-async function selectedCells(event){
-    const cIndex = event.target.getAttribute("cIndex");
-    if(presentGame.board[cIndex] != "" || !gameFlag){
+async function cellClicked(event){
+    const cellIndex = event.target.getAttribute("cellIndex");
+    if(presentGameState.board[cellIndex] != "" || !gameStarted){
         return;
     }
-    await updatingChosenCells(event.target, cIndex);
-    await updateGameFileState();
-    await confirmVictory();
+    await updateGameCells(event.target, cellIndex);
+    await updateBackUpGameFile();
+    await checkForVictory();
 }
+
 
 /**
  * @param {number} index
  * @param {html} cell
  */
-async function updatingChosenCells(selectedCells, index){
-    presentGame.board[index] = presentGame.currPlayer;
-    cells[index].textContent = presentGame.currPlayer;
+async function updateGameCells(cellClicked, index){
+    presentGameState.board[index] = presentGameState.currPlayer;
+    cells[index].textContent = presentGameState.currPlayer;
 }
 
-
-function updateBoardUsingGameState(){
+function updateBoard(){
     for(let i = 0; i < cells.length; i++){
-        cells[i].textContent = presentGame.board[i];
+        cells[i].textContent = presentGameState.board[i];
     }
-    if(presentGame.victoryCombination !== null){
-        cangeTokenColors(presentGame.victoryCombination);
-        clearInterval(syncToJSON);
-        clearInterval(importFromFile); 
-        clearInterval(loadToFile); 
-        playerTurnText.textContent = `${presentGame.currPlayer} wins!`;
-        gameFlag = false;
+    if(presentGameState.victorious !== null){
+        changeCellColors(presentGameState.victorious);
+        clearInterval(refreshInterval);
+        clearInterval(fileLoadInterval);
+        clearInterval(importDataInterval);
+        playerTurn.textContent = `${presentGameState.currPlayer} wins!`;
+        gameStarted = false;
     }
-    else if(!presentGame.board.includes("")){
-        clearInterval(syncToJSON);
-        clearInterval(importFromFile); 
-        clearInterval(loadToFile); 
-        playerTurnText.textContent = `Draw!`;
-        gameFlag = false;
+    else if(!presentGameState.board.includes("")){
+        clearInterval(refreshInterval);
+        clearInterval(fileLoadInterval);
+        clearInterval(importDataInterval);
+        playerTurn.textContent = `Draw!`;
+        gameStarted = false;
     }
 }
 
-function displayMessage(){
-    if(startOfNewGame){
+function drawText(){
+    playerTurn.textContent = `Draw!`;
+}
+
+function victoryText(){
+    playerTurn.textContent = `${presentGameState.currPlayer} wins!`;
+}
+
+
+function displayOpeningMessage(){
+    if(gameOne){
         document.querySelector(".tooltiptext").style.visibility = "visible";
-        playerTurnText.textContent = `Please press start to play!`;
+        playerTurn.textContent = `PRESS START.`;
     }
 }
 
-function displayWinningPlayer(){
-    playerTurnText.textContent = `${presentGame.currPlayer} won the last game!`;
+function displayCurrentPlayer(){
+    playerTurn.textContent = `${presentGameState.currPlayer} won the previous match...`;
     document.querySelector(".tooltiptext").style.visibility = "hidden";
-    if(syncToJSON){
-        clearInterval(syncToJSON);
+    if(refreshInterval){
+        clearInterval(refreshInterval);
     }
 }
+
 
 /**
- * @param {number[]} condition
+ * @param {number[]} cond
  */
-function cangeTokenColors(condition){
-    cells[condition[0]].style.color = "red";
-    cells[condition[1]].style.color = "red";
-    cells[condition[2]].style.color = "red";
+function changeCellColors(cond){
+    cells[cond[0]].style.color = "red";
+    cells[cond[1]].style.color = "red";
+    cells[cond[2]].style.color = "red";
 }
 
-function boardCreation(){
-    if(gameFlag){
+function revealBoard(){
+    if(gameStarted){
         document.getElementById("gameBoard").style.visibility = "visible";
     }
     else{
@@ -236,23 +267,22 @@ function boardCreation(){
     }
 }
 
-function restartWebPage(){
+function resetGameStateAndBoard(){
     cells.forEach(cell => cell.textContent = "");
-    setButtonToStart();
-    if(presentGame.winner === null){
-        presentGame.winner = "O";
-        playerTurnText.textContent = `No winner!`;
+    START();
+    if(presentGameState.winner === null){
+        presentGameState.winner = "0";
+        playerTurn.textContent = `No one wins...`;
     }
 }
 
-function setButtonToClear(){
-    gameButton.textContent = "CLEAR";
+function START(){
+    toggleBtn.textContent = "START";
 }
 
-function setButtonToStart(){
-    gameButton.textContent = "START";
+function CLEAR(){
+    toggleBtn.textContent = "CLEAR";
 }
-
 
 
 /*
@@ -260,174 +290,165 @@ function setButtonToStart(){
 =============================== GAME LOGIC ===================================
 ==============================================================================
 */
-async function gameToggleButton(){
-    if(!gameFlag && startOfNewGame && presentGame.winner === null){
-        await initializeGame();
-        setButtonToClear();
-        gameButton.removeEventListener("click", gameToggleButton);
-    } 
-    else if(gameButton.textContent === "START"){
-        await rematchGameInitialization();
-        setButtonToClear();
-    } 
+async function buttonToggle(){
+    if(!gameStarted && gameOne && presentGameState.winner === null){
+        await creatingGame();
+        CLEAR();
+        toggleBtn.removeEventListener("click", buttonToggle);
+    }
+    else if(toggleBtn.textContent === "START"){
+        await creatingReMatch();
+        CLEAR();
+    }
     else{
         await restartGame();
-        setButtonToStart();
+        START();
     }
 }
 
-async function initializeGame(){
-    await createNewGameState();
-    await gameStateUpdate();
-    await recreateGameState();
-    await assignPlayersGameTokens();
-    await initiateGame();
+async function creatingGame(){
+    await gameStateFile();
+    await updateGameFile();
+    await reInitiateGame();
+    await assignPlayersIdentification();
+    await initiateGUI();
 }
 
-async function rematchGameInitialization(){
-    setButtonToClear();
-    await gameStateUpdate(); 
-    await initiateGame(); 
-    await prepareGame();
-    updatePlayerTurnText();
+async function creatingReMatch(){
+    CLEAR();
+    await updateGameFile();
+    await initiateGUI();
+    await prepGameLogic();
+    updatePlayerTurn();
 }
+
 
 /**
  * @returns {void}
  */
-async function recreateGameState(){
-    await gameStateUpdate();
-    if(startOfNewGame && (presentGame.assignP1[0] === false && presentGame.assignP2[0] === false)){
-        await setGameStateToFile();
-        await gameStateUpdate();
-        return;
-    }
-    if(startOfNewGame && (presentGame.assignP1[0] && presentGame.assignP2[0])){
-        await setGameStateToFile(); 
-        await gameStateUpdate(); 
+async function reInitiateGame(){
+    await updateGameFile();
+    if(gameOne && (presentGameState.isP1[0] === false && presentGameState.isP2[0] === false)){
+        await sendGameStateToFile();
+        await updateGameFile();
         return;
     }
 }
 
-async function rollStartingDice(){
-    await gameStateUpdate();
-    const guess = await playerInputFromDice();
+async function selectStartingPlayer(){
+    await updateGameFile();
+    const guess = await getPlayerDiceInput();
     if(isNaN(guess) || guess < 1 || guess > 6){
         return;
     }
-
-    if(P1 === true){
-        presentGame.p1DiceGuess = guess;
-        await updateGameFileState();
-    }else if(P2 === true){
-        presentGame.p2DiceGuess = guess;
-        await updateGameFileState();
+    
+    if(player1 === true){
+        presentGameState.p1Guess = guess;
+        await updateBackUpGameFile();
+    }
+    else if(player2 === true){
+        presentGameState.p2Guess = guess;
+        await updateBackUpGameFile();
     }
 
-    if(presentGame.p1DiceGuess === null || presentGame.p2DiceGuess === null){
+    if(presentGameState.p1Guess === null || presentGameState.p2Guess === null){
+        awaitingOtherPlayerNumberSubmission();
         return;
     }
-    twoSubmittedGuesses = true;
-
-    if(presentGame.diceRoll === null){
-        presentGame.diceRoll = Math.floor(Math.random() * 6) + 1;
+    playerSubmissions = true;
+    if(presentGameState.diceRoll === null){
+        presentGameState.diceRoll = Math.floor(Math.random() * 6) + 1;
     }
 
-    const player1Diff = Math.abs(presentGame.diceRoll - presentGame.p1DiceGuess);
-    const player2Diff = Math.abs(presentGame.diceRoll - presentGame.p2DiceGuess);
+    const d1 = Math.abs(presentGameState.diceRoll - presentGameState.p1Guess);
+    const d2 = Math.abs(presentGameState.diceRoll - presentGameState.p2Guess);
 
-    if(twoSubmittedGuesses && (player1Diff < player2Diff)){
-        presentGame.currPlayer = "O";
-        presentGame.assignP1[1] = "O";
-        presentGame.assignP2[1] = "X";
+    if(playerSubmissions && (d1 < d2)){
+        presentGameState.currPlayer = "O";
+        presentGameState.isP1[1] = "O";
+        presentGameState.isP2[1] = "X";
     }
-    else if(player1Diff === player2Diff){
-        presentGame.diceRoll = "null";
-        await updateGameFileState();
+    else if(d1 === d2){
+        presentGameState.diceRoll = "null";
+        await updateBackUpGameFile();
         return;
-
     }
     else{
-        presentGame.currPlayer = "O";
-        presentGame.assignP2[1] = "O";
-        presentGame.assignP1[1] = "X";
-
+        presentGameState.currPlayer = "O";
+        presentGameState.isP2[1] = "O";
+        presentGameState.isP1[1] = "X";
     }
 
-    if(twoSubmittedGuesses){       
-        clearInterval(syncToJSON);
+    if(playerSubmissions){
+        clearInterval(refreshInterval);
+    }
+    await updateBackUpGameFile();
+    await updateGameFile();
+
+    if(playerSubmissions){
+        updatePlayerTurn();
     }
 
-    await updateGameFileState();
-    await gameStateUpdate(); 
-    if(twoSubmittedGuesses){
-        updatePlayerTurnText();
-    }
-
-    removeDiceGuessInput();
-    if(twoSubmittedGuesses){
-        prepareGame();
-        gameButton.addEventListener("click", gameToggleButton);
+    removeInputField();
+    if(playerSubmissions){
+        prepGameLogic();
+        toggleBtn.addEventListener("click", toggleBtn);
     }
 }
 
-
 /**
- * @param {boolean} isComputer 
- * @param {number[]} tempOptions
  * @returns {number|boolean}
- * @sideEffects
- */
-
-async function checkForVictory(thisOptions){
+*/
+async function threeInARow(choices){
     let rVal = 0;
-    for(let i = 0; i < victoryCombinations.length; i++){
-        const condition = victoryCombinations[i];
-        const c1 = thisOptions[condition[0]];
-        const c2 = thisOptions[condition[1]];
-        const c3 = thisOptions[condition[2]];
-        if(c1 == c2 && c2 == c3 ){
-            cangeTokenColors(condition);
-            presentGame.victoryCombination = condition;
-            presentGame.winner = presentGame.currPlayer;
+    for(let i = 0; i < victoryCombination.length; i++){
+        const condition = victoryCombination[i];
+        const C1 = victoryCombination[condition[0]];
+        const C2 = victoryCombination[condition[1]];
+        const C3 = victoryCombination[condition[2]];
+
+        if(C1 == C2 && C2 == C3){
+            changeCellColors(condition);
+            presentGameState.victorious = condition;
+            presentGameState.winner = presentGameState.currPlayer;
             rVal = 1;
-        } 
+        }
     }
     return rVal;
 }
 
-async function confirmVictory(){
+async function checkForVictory(){
     let gameWon = false;
-    gameWon = await checkForVictory(presentGame.board);
-
+    gameWon = await threeInARow(presentGameState.board);
     if(gameWon){
-        clearInterval(syncToJSON);
-        clearInterval(importFromFile); 
-        clearInterval(loadToFile);
-        gameFlag = false;
-        if(P1 && (presentGame.winner !== "O")){
-            presentGame.assignP1[1] = "O";
-            presentGame.assignP2[1] = "X";
-            presentGame.winner = "O";
-        }
-        else if(P2 && (presentGame.winner !== "O")){
-            presentGame.assignP2[1] = "O";
-            presentGame.assignP1[1] = "X";
-            presentGame.winner = "O";
-        }
+        clearInterval(refreshInterval);
+        clearInterval(fileLoadInterval);
+        clearInterval(importDataInterval);
+        victoryText();
+        gameStarted = false;
 
-        await updateGameFileState();
+        if(player1 && (presentGameState.winner !== "O")){
+            presentGameState.isP1[1] = "O";
+            presentGameState.isP2[1] = "X";
+            presentGameState.winner = "O";
+        }
+        else if(player2 && (presentGameState.winner !== "O")){
+            presentGameState.isP2[1] = "O";
+            presentGameState.isP1[1] = "X";
+            presentGameState.winner = "O";
+        }
+        await updateBackUpGameFile();
     }
-    else if(!presentGame.board.includes("")){
-        clearInterval(syncToJSON);
-        clearInterval(importFromFile); 
-        clearInterval(loadToFile);
-        gameFlag = false;
-        await updateGameFileState();
-
+    else if(!presentGameState.board.includes("")){
+        clearInterval(refreshInterval);
+        clearInterval(fileLoadInterval);
+        clearInterval(importDataInterval);
+        drawText();
+        gameStarted = false;
+        await updateBackUpGameFile();
     }
-    else if((P1 && presentGame.assignP1[1] === presentGame.currPlayer) || (P2 && presentGame.assignP2[1] === presentGame.currPlayer)){
-        await changeCurrentPlayer();
+    else if((player1 && presentGameState.isP1[1] === presentGameState.currPlayer) || (player2 && presentGameState.isP2[1] === presentGameState.currPlayer)){
+        await changeActivePlayer();
     }
 }
 
@@ -435,183 +456,183 @@ async function confirmVictory(){
 /**
  * @sideEffects
  */
-async function changeCurrentPlayer(){
-    successfulMoveByPlayer = false;
-    if(presentGame.currPlayer === "O"){
-        presentGame.currPlayer = "X";
+async function changeActivePlayer(){
+    successfulPlayerAction = false;
+    if(presentGameState.currPlayer === "O"){
+        presentGameState.currPlayer = "X";
     }
     else{
-        presentGame.currPlayer = "O";
+        presentGameState.currPlayer = "O";
     }
-  
-    clearInterval(importFromFile); 
-    clearInterval(loadToFile);
-    await updateGameFileState();
-    successfulMoveByPlayer = false; 
-    await prepareGame();
+
+    clearInterval(importDataInterval);
+    clearInterval(fileLoadInterval);
+    await updateBackUpGameFile();
+    successfulPlayerAction = false;
+    await prepGameLogic();
 }
 
-async function prepareGame(){
-    if(!successfulMoveByPlayer && ((P1 && presentGame.assignP1[1] === presentGame.currPlayer) || (P2 && presentGame.assignP2[1] === presentGame.currPlayer))){
-        clearInterval(importFromFile);
-        clearInterval(loadToFile);
-        await gameStateUpdate();
-        updateBoardUsingGameState();
-        loadToFile = setInterval(async () => {
-            await updateGameFileState();
-        }, 1000);
-        successfulMoveByPlayer = true;
+async function prepGameLogic(){
+    if(!successfulPlayerAction && ((player1 && presentGameState.isP1[1] === presentGameState.currPlayer) || (player2 && presentGameState.isP2[1] === presentGameState.currPlayer))){
+        clearInterval(importDataInterval);
+        clearInterval(fileLoadInterval);
+        await updateGameFile();
+        updateBoard();
+        successfulPlayerAction = true;
     }
-    else if(successfulMoveByPlayer === false){
-        clearInterval(importFromFile);
-        clearInterval(loadToFile);
-        importFromFile = setInterval(async () => {
-            await gameStateUpdate();
-            updateBoardUsingGameState();
+    else if(successfulPlayerAction === false){
+        clearInterval(importDataInterval);
+        clearInterval(fileLoadInterval);
+
+        importDataInterval = setInterval(async () => {
+            await updateGameFile();
+            updateBoard();
         }, 250);
     }
-    formulateCells();
+    initializeCells();
 }
 
 async function restartGame(){
-    gameFlag = false;
-    clearInterval(syncToJSON);
-    clearInterval(loadToFile);
-    clearInterval(importFromFile);
-    displayWinningPlayer();
-    restartWebPage();
+    gameStarted = false;
+    clearInterval(refreshInterval);
+    clearInterval(fileLoadInterval);
+    clearInterval(importDataInterval);
+    displayCurrentPlayer();
+    resetGameStateAndBoard();
     createGameStateAfterStart();
-    await updateGameFileState(); 
+    await updateBackUpGameFile();
 }
 
 function createGameStateAfterStart(){
-        presentGame.board = ["", "", "", "", "", "", "", "", "" ];
-        if(presentGame.winner !== null){
-            presentGame.currPlayer = presentGame.winner;
-        }
-        presentGame.victoryCombination = null;
-        presentGame.p1DiceGuess = null;
-        presentGame.p2DiceGuess = null;
-        presentGame.diceRoll = null;
+    presentGameState.board = ["", "", "", "", "", "", "", "", "" ];
+    if(presentGameState.winner !== null){
+        presentGameState.currPlayer = presentGameState.winner;
+    }
+    presentGameState.victorious = null;
+    presentGameState.p1Guess = null;
+    presentGameState.p2Guess = null;
+    presentGameState.diceRoll = null;
 }
 
 
 /**
  * @param {number} ms
- * @returns {Promise} 
+ * @returns {Promise}
  */
 function sleep(ms){
-    return new Promise(resolve =>setTimeout(resolve, ms));
+    return new Promise(reolve => setTimeout(resolve, ms));
 }
 
 
 /**
  * @returns {void}
  */
-async function createNewGameState(){
-    const playerOption = {
-        types: [{       
+async function gameStateFile(){
+    const playerChoices = {
+        types: [{
             description: 'JSON Files',
             accept : {'application/json': ['.json']}
         }],
         excludeAcceptAllOption: true,
     };
-    [gameFileFlag] = await window.showOpenFilePicker(playerOption);
-    const errorFlag = await errorCatcher(gameFileFlag);
+
+    [fileFlag] = await window.showOpenFilePicker(playerChoices);
+    const errorFlag = await catchFileError(fileFlag);
     if(errorFlag !== false){
-        let fileData = await gameFileFlag.getFile();
+        let fileData = await fileFlag.getFile();
     }
     else{
+        alert("No file selected.");
         return;
     }
-}
-
-/**
- * @returns  {void}
- */
-async function assignPlayersGameTokens(){
-    if(startOfNewGame){
-        await gameStateUpdate();
-        if(!presentGame.assignP1[0]){
-            presentGame.assignP1[0] = true;
-            P1 = true; 
-            await updateGameFileState(); 
-
-        }
-        else if(!presentGame.assignP2[0]){
-            presentGame.assignP2[0] = true;
-            P2 = true; 
-            await updateGameFileState(); 
-
-        }
-        else{
-            window.location.reload();
-            return;
-        }
-        startOfNewGame = false; 
-        await sleep(500); 
-        await updateGameFileState(); 
-    }
-}
-
-async function setGameStateToFile(){
-    const gameFile = await gameFileFlag.createWritable();    
-    content = JSON.stringify(emptyGameState);
-    await gameFile.write(content);
-    await gameFile.close();
-}
-
-async function gameStateUpdate(){
-    const currFileForGame = await gameFileFlag.getFile();
-    content = await currFileForGame.text();
-    presentGame = JSON.parse(content);
 }
 
 
 /**
  * @returns {void}
  */
-
-async function updateGameFileState(){
-    const accessibility = await gameFileFlag.requestaccessibility({ mode: 'readwrite' });
-    if(accessibility !== 'granted'){
-        return;
+async function assignPlayersIdentification(){
+    if(gameOne){
+        await updateGameFile();
+        if(!presentGameState.isP1[0]){
+            presentGameState.isP1[0] = true;
+            player1 = true;
+            await updateBackUpGameFile();
+        }
+        else if(!presentGameState.isP2[0]){
+            presentGameState.isP2[0] = true;
+            player2 = true;
+            await updateBackUpGameFile();
+        }
+        else{
+            alert("Both players assigned...");
+            window.location.reload();
+            return;
+        }
+        gameOne = false;
+        await sleep(500);
+        await updateBackUpGameFile();
     }
-    const currFileForGame = await gameFileFlag.createWritable();
-    console.log("Current board before write:", presentGame.board);
-    content = JSON.stringify(presentGame);
-    await currFileForGame.write(content);
-    await currFileForGame.close();
+}
+
+async function sendGameStateToFile(){
+    const gameFile = await fileFlag.createWritable();
+    gameInformation = JSON.stringify(defaultGameState);
+    await gameFile.write(gameInformation);
+    await gameFile.close();
+}
+
+async function updateGameFile(){
+    const currFile = await fileFlag.getFile();
+    gameInformation = await currFile.text();
+    presentGameState = JSON.parse(gameInformation);
 }
 
 
 /**
- * @param {FileSystemgameFileFlag}
+ * @returns {void}
+ */
+async function updateBackUpGameFile(){
+    const security = await fileFlag.requestPermission({mode: 'rewrite'});
+    if(security !== 'granted'){
+        alert("Write permission denied.");
+        return;
+    }
+    const currFile = await fileFlag.createWritable();
+    console.log("Current board before write:", presentGameState.board);
+    gameInformation = JSON.stringify(presentGameState);
+    await currFile.write(gameInformation);
+    await currFile.close();
+}
+
+
+/**
+ * @param {FileSystemHandle} fileFlag
  * @returns {File}
  */
-
-async function errorCatcher(gameFileFlag){
-    if(!gameFileFlag){
+async function catchFileError(fileFlag){
+    if(!fileFlag){
+        alert("NO FILE SELECTED.");
         let leave = (event) => {
-            if (event.keyCode === 27) {
+            if(event.keyCode === 27){
                 return;
             }
         };
         document.addEventListener("keydown", leave);
-        createNewGameState();
+        gameStateFile();
         return false;
     }
-    const fileData = await gameFileFlag.getFile();
+    const fileData = await fileFlag.getFile();
     if(fileData.name !== "gameState.json"){
+        alert("WRONG FILE.");
         let leave = (event) => {
-            if (event.keyCode === 27) {
+            if(event.keyCode === 27){
                 return;
             }
         };
         document.addEventListener("keydown", leave);
-        createNewGameState();
+        gameStateFile();
         return false;
     }
-
     return fileData;
 }

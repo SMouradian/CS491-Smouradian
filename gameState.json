@@ -1,0 +1,11 @@
+{
+    "board": ["","","","","","","","",""],
+    "currentPlayer": "",
+    "p1Guess": null,
+    "p2Guess": null,
+    "diceRoll": null,
+    "isP1": [true, ""],
+    "isP2": [true, ""],
+    "victorious": null,
+    "winner": null
+}
